@@ -12,8 +12,15 @@ export const MapScreen = () => {
   const player = useGame((s) => s.player);
   const unlocked = useGame((s) => s.unlocked);
   const showNotif = useGame((s) => s.showNotif);
+  const logout = useGame((s) => s.logout);
 
   const [hovered, setHovered] = useState<LocationKey | null>(null);
+
+  const handleLogout = () => {
+    localStorage.removeItem("guardianes_session");
+    logout();
+    showNotif("Sesión cerrada. ¡Hasta pronto, Guardián!");
+  };
 
   const completed = locations.filter((l) => l.status === "unlocked").length;
   const rank =
