@@ -73,9 +73,11 @@ export const RegisterScreen = () => {
         .from("players")
         .insert({
           username: uname,
+          username_lower: uname.toLowerCase(),
           first_name: form.firstName,
           last_name: form.lastName,
           email,
+          email_lower: email.toLowerCase(),
           age: form.age,
           city: form.city,
         })
