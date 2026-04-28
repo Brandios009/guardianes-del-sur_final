@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useGame } from "@/store/game";
 import { HowToPlayModal } from "@/components/HowToPlayModal";
 import { Sword, HelpCircle, ArrowLeft, Skull, Heart, Flame } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const BossScreen = () => {
   const setScreen = useGame((s) => s.setScreen);
@@ -9,6 +10,7 @@ export const BossScreen = () => {
   const locations = useGame((s) => s.locations);
   const completeLocation = useGame((s) => s.completeLocation);
   const showNotif = useGame((s) => s.showNotif);
+  const player = useGame((s) => s.player);
 
   const loc = locations.find((l) => l.key === activeKey);
   const [howOpen, setHowOpen] = useState(false);
@@ -16,10 +18,18 @@ export const BossScreen = () => {
   if (!loc) return null;
   const { boss } = loc;
 
-  const onStart = () => {
+  const onStart = async () => {
     if (loc.status === "locked") {
       completeLocation(loc.key);
       showNotif(`Has vencido a ${boss.name}. El sur agradece.`);
+      if (player) {
+        const { error } = await supabase
+          .from("player_progress")
+          .insert({ player_id: player.id, location_key: loc.key });
+        if (error && !error.message.includes("duplicate")) {
+          console.error("Error guardando progreso:", error);
+        }
+      }
     }
     setScreen("map");
   };
