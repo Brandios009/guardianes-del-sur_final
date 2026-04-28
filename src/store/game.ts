@@ -44,6 +44,7 @@ export interface GuardianLocation {
 }
 
 export interface Player {
+  id: string;
   username: string;
   firstName: string;
   lastName: string;
@@ -66,6 +67,10 @@ interface GameState {
   activeLocation: LocationKey | null;
   setActiveLocation: (k: LocationKey | null) => void;
   completeLocation: (k: LocationKey) => void;
+
+  hydrateProgress: (keys: LocationKey[]) => void;
+  resetLocations: () => void;
+  logout: () => void;
 
   notif: string | null;
   showNotif: (msg: string) => void;
