@@ -36,6 +36,13 @@ export const Route = createRootRoute({
       { name: "author", content: "Guardianes del Sur" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "Guardianes del Sur — Descubre Nariño" },
+      { name: "twitter:title", content: "Guardianes del Sur — Descubre Nariño" },
+      { name: "description", content: "Guardianes del Sur is a web application for managing user registrations and data." },
+      { property: "og:description", content: "Guardianes del Sur is a web application for managing user registrations and data." },
+      { name: "twitter:description", content: "Guardianes del Sur is a web application for managing user registrations and data." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a2a09da5-19c2-4826-a1b4-98cddd7186b5/id-preview-50ca21ec--274e43b3-358a-47c1-9fda-f14fefd5f7aa.lovable.app-1777372076114.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a2a09da5-19c2-4826-a1b4-98cddd7186b5/id-preview-50ca21ec--274e43b3-358a-47c1-9fda-f14fefd5f7aa.lovable.app-1777372076114.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
