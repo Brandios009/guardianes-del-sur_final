@@ -14,7 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      player_progress: {
+        Row: {
+          id: string
+          location_key: string
+          player_id: string
+          unlocked_at: string
+        }
+        Insert: {
+          id?: string
+          location_key: string
+          player_id: string
+          unlocked_at?: string
+        }
+        Update: {
+          id?: string
+          location_key?: string
+          player_id?: string
+          unlocked_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_progress_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          age: string
+          city: string
+          created_at: string
+          email: string
+          email_lower: string
+          first_name: string
+          id: string
+          last_name: string
+          username: string
+          username_lower: string
+        }
+        Insert: {
+          age: string
+          city: string
+          created_at?: string
+          email: string
+          email_lower: string
+          first_name: string
+          id?: string
+          last_name: string
+          username: string
+          username_lower: string
+        }
+        Update: {
+          age?: string
+          city?: string
+          created_at?: string
+          email?: string
+          email_lower?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          username?: string
+          username_lower?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
