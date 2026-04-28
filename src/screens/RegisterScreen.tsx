@@ -1,38 +1,18 @@
 import { FormEvent, useState } from "react";
-import { useGame } from "@/store/game";
+import { useGame, type LocationKey } from "@/store/game";
 import { Colibri } from "@/components/Colibri";
-import { ChevronRight, Sparkles, LogIn, UserPlus } from "lucide-react";
-
-type StoredPlayer = {
-  username: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  age: string;
-  city: string;
-};
-
-const STORAGE_KEY = "guardianes_players";
-
-const loadPlayers = (): Record<string, StoredPlayer> => {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  } catch {
-    return {};
-  }
-};
-
-const savePlayers = (data: Record<string, StoredPlayer>) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-};
+import { ChevronRight, Sparkles, LogIn, UserPlus, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const RegisterScreen = () => {
   const setPlayer = useGame((s) => s.setPlayer);
   const setScreen = useGame((s) => s.setScreen);
   const showNotif = useGame((s) => s.showNotif);
+  const hydrateProgress = useGame((s) => s.hydrateProgress);
 
   const [mode, setMode] = useState<"register" | "login">("register");
   const [loginName, setLoginName] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     username: "",
@@ -44,53 +24,129 @@ export const RegisterScreen = () => {
     oath: false,
   });
 
-  const onSubmit = (e: FormEvent) => {
+  const loadProgress = async (playerId: string) => {
+    const { data } = await supabase
+      .from("player_progress")
+      .select("location_key")
+      .eq("player_id", playerId);
+    const keys = (data ?? []).map((r) => r.location_key as LocationKey);
+    hydrateProgress(keys);
+  };
+
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     if (!form.oath) {
       showNotif("Acepta términos y condiciones para continuar el tour");
       return;
     }
-    const uname = form.username.trim().toLowerCase();
+    const uname = form.username.trim();
+    const email = form.email.trim();
     if (!uname) {
       showNotif("Ingresa un nombre de registro válido");
       return;
     }
-    const players = loadPlayers();
-    if (players[uname]) {
-      showNotif("Ese nombre ya existe. Inicia sesión.");
-      setMode("login");
-      setLoginName(form.username);
-      return;
+
+    setLoading(true);
+    try {
+      // Validar duplicados
+      const { data: existing, error: checkErr } = await supabase
+        .from("players")
+        .select("username_lower, email_lower")
+        .or(`username_lower.eq.${uname.toLowerCase()},email_lower.eq.${email.toLowerCase()}`);
+
+      if (checkErr) throw checkErr;
+
+      if (existing && existing.length > 0) {
+        const dupUser = existing.some((r) => r.username_lower === uname.toLowerCase());
+        const dupEmail = existing.some((r) => r.email_lower === email.toLowerCase());
+        if (dupUser) {
+          showNotif("Ese nombre de registro ya está en uso. Prueba otro.");
+        } else if (dupEmail) {
+          showNotif("Ese correo ya está registrado.");
+        }
+        setLoading(false);
+        return;
+      }
+
+      const { data: inserted, error: insErr } = await supabase
+        .from("players")
+        .insert({
+          username: uname,
+          first_name: form.firstName,
+          last_name: form.lastName,
+          email,
+          age: form.age,
+          city: form.city,
+        })
+        .select()
+        .single();
+
+      if (insErr || !inserted) throw insErr ?? new Error("No se pudo crear el jugador");
+
+      const player = {
+        id: inserted.id,
+        username: inserted.username,
+        firstName: inserted.first_name,
+        lastName: inserted.last_name,
+        email: inserted.email,
+        age: inserted.age,
+        city: inserted.city,
+      };
+      localStorage.setItem("guardianes_session", inserted.username);
+      setPlayer(player);
+      hydrateProgress([]);
+      setScreen("map");
+    } catch (err: any) {
+      console.error(err);
+      showNotif("No se pudo registrar. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
     }
-    const newPlayer: StoredPlayer = {
-      username: form.username,
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: form.email,
-      age: form.age,
-      city: form.city,
-    };
-    players[uname] = newPlayer;
-    savePlayers(players);
-    setPlayer(newPlayer);
-    setScreen("map");
   };
 
-  const onLogin = (e: FormEvent) => {
+  const onLogin = async (e: FormEvent) => {
     e.preventDefault();
-    const uname = loginName.trim().toLowerCase();
+    if (loading) return;
+    const uname = loginName.trim();
     if (!uname) {
       showNotif("Ingresa tu nombre de registro");
       return;
     }
-    const players = loadPlayers();
-    const found = players[uname];
-    if (!found) {
-      showNotif("No existe un Guardián con ese nombre");
-      return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("players")
+        .select("*")
+        .eq("username_lower", uname.toLowerCase())
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) {
+        showNotif("No existe un Guardián con ese nombre");
+        setLoading(false);
+        return;
+      }
+
+      const player = {
+        id: data.id,
+        username: data.username,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        email: data.email,
+        age: data.age,
+        city: data.city,
+      };
+      localStorage.setItem("guardianes_session", data.username);
+      setPlayer(player);
+      await loadProgress(data.id);
+      setScreen("map");
+    } catch (err) {
+      console.error(err);
+      showNotif("No se pudo ingresar. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
     }
-    setPlayer(found);
-    setScreen("map");
   };
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
