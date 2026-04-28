@@ -61,9 +61,9 @@ export const MapScreen = () => {
       {/* Header */}
       <header className="relative z-10 panel-pixel border-x-0 border-t-0 px-4 sm:px-8 py-3 flex flex-wrap items-center gap-3 justify-between">
         <button
-          onClick={() => setScreen("register")}
+          onClick={handleLogout}
           className="btn-ghost-pixel"
-          aria-label="Salir"
+          aria-label="Cerrar sesión"
         >
           <ArrowLeft className="w-3 h-3" /> Salir
         </button>
