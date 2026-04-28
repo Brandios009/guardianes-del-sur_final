@@ -33,10 +33,47 @@ export const Route = createFileRoute("/")({
 function GuardianesIndex() {
   const screen = useGame((s) => s.screen);
   const unlocked = useGame((s) => s.unlocked);
+  const setPlayer = useGame((s) => s.setPlayer);
+  const setScreen = useGame((s) => s.setScreen);
+  const hydrateProgress = useGame((s) => s.hydrateProgress);
 
   useEffect(() => {
     document.body.classList.toggle("world-vital", unlocked);
   }, [unlocked]);
+
+  // Auto-login si hay sesión guardada
+  useEffect(() => {
+    const username = typeof window !== "undefined" ? localStorage.getItem("guardianes_session") : null;
+    if (!username) return;
+    let cancelled = false;
+    (async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase
+        .from("players")
+        .select("*")
+        .eq("username_lower", username.toLowerCase())
+        .maybeSingle();
+      if (cancelled || !data) return;
+      setPlayer({
+        id: data.id,
+        username: data.username,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        email: data.email,
+        age: data.age,
+        city: data.city,
+      });
+      const { data: prog } = await supabase
+        .from("player_progress")
+        .select("location_key")
+        .eq("player_id", data.id);
+      hydrateProgress((prog ?? []).map((p) => p.location_key as any));
+      setScreen("map");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [setPlayer, setScreen, hydrateProgress]);
 
   return (
     <div className="relative min-h-screen w-full bg-background text-foreground overflow-x-hidden">
