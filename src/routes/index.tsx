@@ -101,8 +101,7 @@ function GuardianesIndex() {
 
 function UserPanel() {
   const player = useGame((s) => s.player);
-  const setPlayer = useGame((s) => s.setPlayer);
-  const setScreen = useGame((s) => s.setScreen);
+  const logout = useGame((s) => s.logout);
   const locations = useGame((s) => s.locations);
 
   const completed = locations.filter((l) => l.status === "unlocked").length;
@@ -121,8 +120,8 @@ function UserPanel() {
           <button
             type="button"
             onClick={() => {
-              setPlayer(null);
-              setScreen("register");
+              localStorage.removeItem("guardianes_session");
+              logout();
             }}
             className="btn-ghost-pixel px-2 py-1 text-[8px]"
           >
