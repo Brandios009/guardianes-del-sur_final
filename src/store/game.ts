@@ -243,6 +243,28 @@ export const useGame = create<GameState>((set, get) => ({
     set({ locations, unlocked: allUnlocked });
   },
 
+  hydrateProgress: (keys) => {
+    const locations = get().locations.map((l) =>
+      keys.includes(l.key) ? { ...l, status: "unlocked" as LocationStatus } : { ...l, status: "locked" as LocationStatus }
+    );
+    const allUnlocked = locations.length > 0 && locations.every((l) => l.status === "unlocked");
+    set({ locations, unlocked: allUnlocked });
+  },
+
+  resetLocations: () => {
+    set({ locations: initialLocations.map((l) => ({ ...l, status: "locked" as LocationStatus })), unlocked: false });
+  },
+
+  logout: () => {
+    set({
+      player: null,
+      activeLocation: null,
+      unlocked: false,
+      locations: initialLocations.map((l) => ({ ...l, status: "locked" as LocationStatus })),
+      screen: "register",
+    });
+  },
+
   notif: null,
   showNotif: (msg) => {
     set({ notif: msg });
